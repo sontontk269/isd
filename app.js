@@ -16,7 +16,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
     throw err;
   } else {
     db.serialize(() => {
-      var salt = bcrypt.genSaltSync(10);
+      let salt = bcrypt.genSaltSync(10);
       db.run(
         `CREATE TABLE Users (
         Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,7 +34,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             console.log(err);
           } else {
             // Table just created, creating some rows
-            var insert =
+            let insert =
               "INSERT INTO Users (Username, Email, Password, Salt, DateCreated) VALUES (?,?,?,?,?)";
             db.run(insert, [
               "user1",
@@ -194,6 +194,19 @@ app.get("/user", (req, res) => {
   });
 });
 
+// Get user by ID
+app.get("/user/:userID", async (req, res) => {
+  const userID = req.params.userID;
+  let getUser = "SELECT * FROM Users WHERE Id = ?"
+  await db.all(getUser, [userID], (err, row) => {
+    if (err) return console.log(err)
+    
+    res.send(row)
+  })
+})
+
+
+
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
@@ -211,9 +224,9 @@ app.post("/register", async (req, res) => {
       }
 
       if (result.length === 0) {
-        var salt = bcrypt.genSaltSync(10);
+        const salt = bcrypt.genSaltSync(10);
 
-        var data = {
+        const data = {
           Username: Username,
           Email: Email,
           Password: bcrypt.hashSync(Password, salt),
@@ -221,16 +234,16 @@ app.post("/register", async (req, res) => {
           DateCreated: Date("now"),
         };
 
-        var sql =
+        let sql =
           "INSERT INTO Users (Username, Email, Password, Salt, DateCreated) VALUES (?,?,?,?,?)";
-        var params = [
+        const params = [
           data.Username,
           data.Email,
           data.Password,
           data.Salt,
           Date("now"),
         ];
-        var user = db.run(sql, params, function (err, innerResult) {
+        const user = db.run(sql, params, function (err, innerResult) {
           if (err) {
             res.status(400).json({ error: err.message });
             return;
@@ -261,7 +274,7 @@ app.post("/login", async (req, res) => {
     //   res.status(400).send("Missing Username and Password");
     // }
     let user = [];
-    var login = "SELECT * FROM Users WHERE Email = ? ";
+    let login = "SELECT * FROM Users WHERE Email = ? ";
     await db.all(login, [Email], (err, rows) => {
       if (err) {
         res.status(400).json({ error: err.message });
@@ -278,7 +291,7 @@ app.post("/login", async (req, res) => {
         return res.status(400).send("User not found!");
       }
 
-      var PHash = bcrypt.hashSync(Password, user[0].Salt);
+      const PHash = bcrypt.hashSync(Password, user[0].Salt);
 
       if (PHash === user[0].Password) {
         // Create JWT Token
@@ -329,6 +342,8 @@ app.get("/infor", (req, res) => {
     res.send(infor);
   });
 });
+
+
 
 //create post
 app.post("/createpost", async (req, res) => {
@@ -464,6 +479,47 @@ app.post("/rate", (req, res) => {
             .json({ message: "Rating successful.", averageRating });
         }
       });
+    }
+  });
+});
+
+//check Like
+
+app.post('/checkLike', (req, res) => {
+  const { userID, postID } = req.body;
+  let hasLike = false
+  let checkLikes = "SELECT * FROM likes WHERE userID = ? AND postID=?"
+
+  db.all(checkLikes, [userID, postID], (err, row) => {
+    if (err) return console.log(err)
+    
+    if (row.length == 0) {
+      res.status(200).json({hasLike})
+      
+    } else {
+      hasLike = true
+      res.json({hasLike})
+    }
+
+  })
+})
+
+
+
+// check rate
+app.post("/checkRate", (req, res) => {
+  const { userID, postID } = req.body;
+  let hasRate = false;
+  let checkRating = "SELECT * FROM ratings WHERE userID = ? AND postID=?";
+
+  db.all(checkRating, [userID, postID], (err, row) => {
+    if (err) return console.log(err);
+
+    if (row.length == 0) {
+      res.status(200).json({ hasRate });
+    } else {
+      hasRate = true;
+      res.json({ hasRate });
     }
   });
 });
