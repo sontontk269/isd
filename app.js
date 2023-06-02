@@ -83,10 +83,16 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         `CREATE TABLE Blog(
       BlogID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text,
       date date ,
-      img text
+      
+      img text,
+      likeCount INTEGER DEFAULT 0,
+      totalRate INTEGER DEFAULT 0,
+      totalPoint INTEGER DEFAULT 0,
+      comment TEXT
 
     )`
       );
@@ -95,11 +101,16 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         `CREATE TABLE Food(
       postID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text,
       date date ,
       img text,
       BlogID INTEGER,
+      likeCount INTEGER DEFAULT 0,
+      totalRate INTEGER DEFAULT 0,
+      totalPoint INTEGER DEFAULT 0,
+      comment TEXT,
       FOREIGN KEY (BlogID) REFERENCES Blog(BlogId)
 
     )`
@@ -109,11 +120,16 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         `CREATE TABLE Shopping(
       postID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text,
       date date ,
       img text,
       BlogID INTEGER,
+      likeCount INTEGER DEFAULT 0,
+      totalRate INTEGER DEFAULT 0,
+      totalPoint INTEGER DEFAULT 0,
+      comment TEXT,
       FOREIGN KEY (BlogID) REFERENCES Blog(BlogId)
 
     )`
@@ -123,11 +139,16 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         `CREATE TABLE Travelling(
       postID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text ,
       date date ,
       img text,
       BlogID INTEGER,
+      likeCount INTEGER DEFAULT 0,
+      totalRate INTEGER DEFAULT 0,
+      totalPoint INTEGER DEFAULT 0,
+      comment TEXT,
       FOREIGN KEY (BlogID) REFERENCES Blog(BlogId)
 
     )`
@@ -137,11 +158,16 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         `CREATE TABLE pinPost(
       pinID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text,
       date date ,
       img text,
       BlogID INTEGER,
+      likeCount INTEGER DEFAULT 0,
+      totalRate INTEGER DEFAULT 0,
+      totalPoint INTEGER DEFAULT 0,
+      comment TEXT,
       FOREIGN KEY (BlogID) REFERENCES Blog(BlogId)
 
     )`
@@ -152,7 +178,6 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
   id INTEGER PRIMARY KEY,
   postID INTERGER ,
   userID INTEGER,
-  rating INTEGER,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (userId) REFERENCES Users(Id),
   FOREIGN KEY (postID) REFERENCES Blog(BlogId)
@@ -343,16 +368,22 @@ app.get("/infor", (req, res) => {
   });
 });
 
-
+// likeCount
+// totalRate
+// totalPoint
+// comment T
 
 //create post
 app.post("/createpost", async (req, res) => {
-  const { title, content, type, date, img } = req.body;
+  const { title, des, content, type, date, img, comments } = req.body;
+  
+  
+
 
   let createPost =
-    "INSERT INTO Blog(title, content, type, date, img) VALUES(?,?,?,?,?)";
-  let classify = `INSERT INTO ${type}(BlogID,title, content, type, date, img) SELECT * FROM Blog WHERE Blog.type == "${type}" ORDER BY BlogID DESC LIMIT 1 `;
-  await db.run(createPost, [title, content, type, date, img], (err) => {
+    "INSERT INTO Blog(title, des, content, type, date, img, likeCount, totalRate, totalPoint, comment) VALUES(?,?,?,?,?,?, 0, 0, 0, ?)";
+  let classify = `INSERT INTO ${type}(BlogID,title, des, content, type, date, img, likeCount, totalRate, totalPoint, comment) SELECT * FROM Blog WHERE Blog.type == "${type}" ORDER BY BlogID DESC LIMIT 1 `;
+  await db.run(createPost, [title,des, content, type, date, img,comments ], (err) => {
     if (err) {
       console.log(err);
       return res.status(400).send("Create post failed!!");
@@ -369,9 +400,12 @@ app.post("/createpost", async (req, res) => {
 app.get("/trending", (req, res) => {
   let sqlTrending = "SELECT * FROM Blog";
   db.all(sqlTrending, [], (err, post) => {
-    if (err) console.log(err);
+    if (err) console.log(err)
 
-    res.send(post);
+    post.forEach(p => {
+      p.comment = JSON.parse(p.comment)
+    })
+    res.json(post)
   });
 });
 
@@ -380,7 +414,34 @@ app.get("/food", (req, res) => {
   db.all(sqlTrending, [], (err, post) => {
     if (err) console.log(err);
 
-    res.send(post);
+    post.forEach((p) => {
+      p.comment = JSON.parse(p.comment);
+    });
+    res.json(post);
+  });
+});
+
+app.get("/shopping", (req, res) => {
+  let sqlTrending = "SELECT * FROM Shopping";
+  db.all(sqlTrending, [], (err, post) => {
+    if (err) console.log(err);
+
+    post.forEach((p) => {
+      p.comment = JSON.parse(p.comment);
+    });
+    res.json(post);
+  });
+});
+
+app.get("/travelling", (req, res) => {
+  let sqlTrending = "SELECT * FROM Travelling";
+  db.all(sqlTrending, [], (err, post) => {
+    if (err) console.log(err);
+
+    post.forEach((p) => {
+      p.comment = JSON.parse(p.comment);
+    });
+    res.json(post);
   });
 });
 
@@ -391,7 +452,10 @@ app.get("/post/:id", async (req, res) => {
   await db.all(getpost, [postID], (err, post) => {
     if (err) console.log(err);
 
-    res.send(post);
+    post.forEach((p) => {
+      p.comment = JSON.parse(p.comment);
+    });
+    res.json(post);
   });
 });
 
@@ -407,7 +471,7 @@ app.get("/pinpost/:id", async (req, res) => {
       res.status(400).send("This post was pin!!");
     } else {
       let pinPost =
-        "INSERT INTO pinPost( title, content, type, date, img, BlogID) SELECT title, content, type, date, img, BlogID FROM Blog WHERE BlogID = ?";
+        "INSERT INTO pinPost( title, des, content, type, date, img, BlogID,  likeCount, totalRate, totalPoint, comment) SELECT title, des, content, type, date, img, BlogID,  likeCount, totalRate, totalPoint, comment FROM Blog WHERE BlogID = ?";
       db.run(pinPost, [postID], (err) => {
         if (err) console.log(err);
         res.status(200).send("Pin blog successfully!!");
@@ -455,10 +519,10 @@ app.delete("/deletepost/:type/:id", async (req, res) => {
 
 //  rating
 app.post("/rate", (req, res) => {
-  const { userID, postID, rating } = req.body;
+  const { postID, totalRate, type } = req.body;
 
-  let insertRate = "INSERT INTO ratings(userID, postID) VALUES(?,?,?)";
-  db.run(insertRate, [userID, postID, rating], (err) => {
+  let insertRate = "UPDATE Blog SET totalRate = ? WHERE BlogID = ?";
+  db.run(insertRate, [ totalRate, postID ], (err) => {
     if (err) {
       console.log(err);
       return res.status(400).send("Rating fail!!");
@@ -483,86 +547,120 @@ app.post("/rate", (req, res) => {
   });
 });
 
-//check Like
 
-app.post('/checkLike', (req, res) => {
+
+
+//checklike post
+app.post("/checklike", (req, res) => {
   const { userID, postID } = req.body;
   let hasLike = false
-  let checkLikes = "SELECT * FROM likes WHERE userID = ? AND postID=?"
 
-  db.all(checkLikes, [userID, postID], (err, row) => {
-    if (err) return console.log(err)
+  let checklike = "SELECT * FROM  likes WHERE userID = ? AND postID = ?"
+
+  db.all(checklike, [userID, postID], (err, rows) => {
+    if (err) console.log(err)
     
-    if (row.length == 0) {
-      res.status(200).json({hasLike})
-      
-    } else {
+    if (rows.length > 0) {
       hasLike = true
-      res.json({hasLike})
-    }
-
-  })
-})
-
-
-
-// check rate
-app.post("/checkRate", (req, res) => {
-  const { userID, postID } = req.body;
-  let hasRate = false;
-  let checkRating = "SELECT * FROM ratings WHERE userID = ? AND postID=?";
-
-  db.all(checkRating, [userID, postID], (err, row) => {
-    if (err) return console.log(err);
-
-    if (row.length == 0) {
-      res.status(200).json({ hasRate });
+      res.json(hasLike)
     } else {
-      hasRate = true;
-      res.json({ hasRate });
+      hasLike = false
+      
+      const insertLike = "INSERT INTO likes(userID, postID) VALUES(? ,?)";
+      db.run(insertLike, [userID, postID], (err) => {
+        if (err) {
+          console.log(err);
+        } 
+      });
+      
+      res.json(hasLike)
     }
-  });
+  })
 });
 
 //like post
-app.post("/like", (req, res) => {
-  const { userID, postID } = req.body;
+app.post('/likepost', async(req, res) => {
+  const { likeCount, type, postID } = req.body;
 
-  const insertLike = "INSERT INTO likes(userID, postID) VALUES(? ,?)";
-  db.run(insertLike, [userID, postID], (err) => {
-    if (err) {
-      console.log(err);
-      return res.status(400).send("Like fail!!");
-    } else {
-      // Calculate the total number of likes
-      const countQuery = `SELECT COUNT(*) AS total_likes FROM likes`;
+  let likepost = "UPDATE Blog SET likeCount = ? WHERE BlogID = ?"
+  let likeother = `UPDATE ${type} SET likeCount = ? WHERE BlogID = ?`;
+  await db.run(likepost, [likeCount, postID], (err) => {
+    if (err) console.log(err);
 
-      db.get(countQuery, (err, row) => {
-        if (err) {
-          console.error(err);
-          res.status(500).json({ error: "Failed to calculate total likes." });
-        } else {
-          const totalLikes = row.total_likes;
-          res.status(200).json({ message: "Like successful.", totalLikes });
-        }
-      });
-    }
-  });
-});
+    res.status(200).send("Like successfully!!")
+    
+  })
+  
+   await db.run(likeother, [likeCount, postID], (err) => {
+    if(err) console.log(err)
+  })
+})
 
 //unlike
-app.post("/unlike", (req, res) => {
+app.post("/unlikepost", async(req, res) => {
+  const { likeCount, type, postID } = req.body;
+
+  let unlikepost = "UPDATE Blog SET likeCount = ? WHERE BlogID = ?"
+  let unlikeother = `UPDATE ${type} SET likeCount = ? WHERE postID = ?`
+  await db.run(unlikepost, [likeCount, postID], (err) => {
+    if (err) console.log(err);
+
+    res.status(200).send("Unlike successfully!!")
+    
+  })
+  
+   await db.run(unlikeother, [likeCount, postID], (err) => {
+    if(err) console.log(err)
+  })
+});
+
+
+//checkrating
+app.post("/checkrate", (req, res) => {
   const { userID, postID } = req.body;
-  let unlike = `DELETE FROM likes WHERE userID = ? AND postID = ?`;
-  db.run(unlike, [userID, postID], (err) => {
-    if (err) {
-      console.log(err);
-      return res.status(400).send("Like fail!!");
+  let hasRate = false;
+
+  let checkrating = "SELECT * FROM  ratings WHERE userID = ? AND postID = ?";
+
+  db.all(checkrating, [userID, postID], (err, rows) => {
+    if (err) console.log(err);
+
+    if (rows.length > 0) {
+      hasRate = true;
+      res.json(hasRate);
     } else {
-      res.status(200).json({ message: "Unlike successful." });
+      hasRate = false;
+
+      const insertRate = "INSERT INTO ratings(userID, postID) VALUES(? ,?)";
+      db.run(insertRate, [userID, postID], (err) => {
+        if (err) {
+          console.log(err);
+        }
+      });
+
+      res.json(hasRate);
     }
   });
 });
+
+
+//rating
+app.post("/rating", async (req, res) => {
+  const { totalRate, totalPoint , type, postID } = req.body;
+
+  let ratepost = "UPDATE Blog SET totalRate = ?, totalPoint = ? WHERE BlogID = ?";
+  let rateother = `UPDATE ${type} SET totalRate = ?, totalPoint = ? WHERE BlogID = ?`;
+  await db.run(ratepost, [totalRate, totalPoint, postID], (err) => {
+    if (err) console.log(err);
+
+    res.status(200).send("Rate successfully!!");
+  });
+
+  await db.run(rateother, [totalRate, totalPoint, postID], (err) => {
+    if (err) console.log(err);
+  });
+});
+
 
 app.listen(port, () => {
   console.log(`App listening at http://localhost:${port}`);

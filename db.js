@@ -54,10 +54,12 @@ db.serialize(() => {
     `CREATE TABLE Infor_User (
     inforID INTEGER PRIMARY KEY AUTOINCREMENT,
     name text not null,
+    email text,
     des text,
     dob  date not null,
     address text not null,
-    phone text not null
+    phone text not null,
+    img text
     )`,
     (err) => console.log(err)
   );
@@ -66,10 +68,13 @@ db.serialize(() => {
     `CREATE TABLE Blog(
       BlogID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text,
       date date ,
-      img text
+      img text,
+      likes INTEGER DEFAULT 0,
+      
 
     )`
   );
@@ -78,6 +83,7 @@ db.serialize(() => {
     `CREATE TABLE Food(
       postID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text,
       date date ,
@@ -92,6 +98,7 @@ db.serialize(() => {
     `CREATE TABLE Shopping(
       postID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text,
       date date ,
@@ -106,6 +113,7 @@ db.serialize(() => {
     `CREATE TABLE Travelling(
       postID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text ,
       date date ,
@@ -120,6 +128,7 @@ db.serialize(() => {
     `CREATE TABLE pinPost(
       pinID INTEGER PRIMARY KEY AUTOINCREMENT,
       title text not null,
+      des text not null,
       content text not null,
       type text,
       date date ,
