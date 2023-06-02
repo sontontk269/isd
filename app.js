@@ -517,35 +517,7 @@ app.delete("/deletepost/:type/:id", async (req, res) => {
   });
 });
 
-//  rating
-app.post("/rate", (req, res) => {
-  const { postID, totalRate, type } = req.body;
 
-  let insertRate = "UPDATE Blog SET totalRate = ? WHERE BlogID = ?";
-  db.run(insertRate, [ totalRate, postID ], (err) => {
-    if (err) {
-      console.log(err);
-      return res.status(400).send("Rating fail!!");
-    } else {
-      // Calculate the average rating
-      const averageQuery = `SELECT AVG(rating) AS average_rating FROM ratings`;
-
-      db.get(averageQuery, (err, row) => {
-        if (err) {
-          console.error(err);
-          res
-            .status(500)
-            .json({ error: "Failed to calculate average rating." });
-        } else {
-          const averageRating = row.average_rating;
-          res
-            .status(200)
-            .json({ message: "Rating successful.", averageRating });
-        }
-      });
-    }
-  });
-});
 
 
 
