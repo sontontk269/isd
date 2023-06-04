@@ -479,6 +479,19 @@ app.get("/pinpost/:id", async (req, res) => {
     }
   });
 });
+
+// get pinpost
+app.get("/pinpost", async (req, res) => {
+  let checkPin = "SELECT * FROM pinPost ";
+  await db.all(checkPin, (err, row) => {
+    if (err) console.log(err)
+
+    row.forEach((r) => {
+      r.comment = JSON.parse(r.comment);
+    });
+    res.json(row);
+  });
+});
 //unpin post
 app.get("/unpinpost/:id", (req, res) => {
   const postID = req.params.id;
