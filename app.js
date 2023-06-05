@@ -68,7 +68,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         }
       );
       db.run(
-        `CREATE TABLE Infor_User (
+        `CREATE TABLE Infor_Admin (
     inforID INTEGER PRIMARY KEY AUTOINCREMENT,
     name text not null,
     des text,
@@ -349,7 +349,7 @@ app.post("/postinfor", async (req, res) => {
   const { Name, Des, DoB, Address, Phone } = req.body;
 
   let insertInfor =
-    "UPDATE Infor_User SET name = ? , des = ?, dob = ?, address = ?, phone = ? WHERE inforID = 1 ";
+    "UPDATE Infor_Admin SET name = ? , des = ?, dob = ?, address = ?, phone = ? WHERE inforID = 1 ";
   await db.run(insertInfor, [Name, Des, DoB, Address, Phone], (err) => {
     if (err) {
       console.log(err);
@@ -360,7 +360,7 @@ app.post("/postinfor", async (req, res) => {
 });
 
 app.get("/infor", (req, res) => {
-  let sqlInfor = "SELECT * FROM Infor_User";
+  let sqlInfor = "SELECT * FROM Infor_Admin";
   db.all(sqlInfor, [], (err, infor) => {
     if (err) console.log(err);
 
